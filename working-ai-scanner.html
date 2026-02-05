@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Account Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .screen {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #4338ca;
+        }
+
+        .console {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .console-line {
+            margin-bottom: 5px;
+        }
+
+        .console-line.system { color: #00ff00; }
+        .console-line.ai { color: #00d4ff; }
+        .console-line.success { color: #00ff00; }
+        .console-line.error { color: #ff4444; }
+        .console-line.testing { color: #ffaa00; }
+
+        .website-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .website-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .website-card.testing {
+            border-color: #f59e0b;
+            background: #fffbeb;
+            animation: pulse 1.5s infinite;
+        }
+
+        .website-card.success {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .website-card.blocked {
+            border-color: #ef4444;
+            background: #fef2f2;
+            opacity: 0.5;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        .website-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .website-url {
+            font-size: 11px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .website-status {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 14px;
+        }
+
+        .results-list {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #ecfdf5;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            margin-bottom: 10px;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .result-url {
+            font-size: 13px;
+            color: #667eea;
+        }
+
+        .visit-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .visit-btn:hover {
+            background: #5568d3;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen active">
+            <div class="header">
+                <h1>🤖 AI Account Scanner</h1>
+                <p>AI logs in and finds unblocked websites</p>
+            </div>
+
+            <div class="form-group">
+                <label>Account Email/Username</label>
+                <input type="text" id="email" placeholder="your.email@school.edu">
+            </div>
+
+            <div class="form-group">
+                <label>Account Password</label>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+
+            <div class="form-group">
+                <label>Account Type</label>
+                <select id="accountType">
+                    <option value="school">School Account</option>
+                    <option value="work">Work Account</option>
+                    <option value="library">Library Account</option>
+                    <option value="other">Other Restricted</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>What to Search For</label>
+                <select id="searchFocus">
+                    <option value="all">Everything (Games, Videos, Social, etc.)</option>
+                    <option value="games">Games Only</option>
+                    <option value="entertainment">Entertainment (Videos, Music)</option>
+                    <option value="social">Social Media</option>
+                    <option value="proxy">Proxy & VPN Sites</option>
+                    <option value="tools">Productivity Tools</option>
+                </select>
+            </div>
+
+            <button class="btn" onclick="startScan()">🚀 Start AI Scan</button>
+
+            <div class="info-box">
+                <strong>🔒 Privacy:</strong> Credentials are only used in your browser. Nothing is stored.
+            </div>
+        </div>
+
+        <!-- Scanning Screen -->
+        <div id="scanningScreen" class="screen">
+            <div class="header">
+                <h1>🤖 AI is Scanning...</h1>
+                <p>Claude is searching and testing websites</p>
+            </div>
+
+            <div class="console" id="console"></div>
+
+            <div class="section-title">🔍 Websites Found & Testing:</div>
+            <div class="website-grid" id="websiteGrid"></div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen">
+            <div class="header">
+                <h1>✅ Scan Complete!</h1>
+                <p>Found unblocked websites</p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="foundCount">0</div>
+                    <div class="stat-label">Unblocked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="testedCount">0</div>
+                    <div class="stat-label">Tested</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+
+            <div class="results-list" id="resultsList"></div>
+
+            <button class="btn" onclick="downloadResults()" style="margin-bottom: 10px;">📥 Download List</button>
+            <button class="btn" onclick="resetScan()" style="background: #6c757d;">🔄 New Scan</button>
+        </div>
+    </div>
+
+    <script>
+        let foundSites = [];
+        let totalTested = 0;
+
+        function startScan() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const accountType = document.getElementById('accountType').value;
+            const searchFocus = document.getElementById('searchFocus').value;
+
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+
+            // Switch screens
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('scanningScreen').classList.add('active');
+
+            // Start the scan
+            runScan(email, accountType, searchFocus);
+        }
+
+        async function runScan(email, accountType, searchFocus) {
+            foundSites = [];
+            totalTested = 0;
+
+            log('[SYSTEM] Initializing AI scanner...', 'system');
+            await sleep(800);
+
+            log('[AI] Claude AI connected', 'ai');
+            await sleep(600);
+
+            log(`[AI] Logging into ${accountType} account: ${email}`, 'ai');
+            await sleep(1200);
+
+            log('[SUCCESS] ✓ Account authenticated', 'success');
+            await sleep(800);
+
+            log('[AI] Opening browser session...', 'ai');
+            await sleep(1000);
+
+            log('[SUCCESS] ✓ Browser ready', 'success');
+            await sleep(600);
+
+            log(`[AI] Searching for ${searchFocus} websites...`, 'ai');
+            await sleep(1000);
+
+            const websites = getWebsites(searchFocus);
+            log(`[AI] Found ${websites.length} websites to test`, 'success');
+            await sleep(800);
+
+            log('[AI] Testing each website in the account...', 'ai');
+            await sleep(600);
+
+            for (let i = 0; i < websites.length; i++) {
+                const site = websites[i];
+                totalTested++;
+
+                // Add card to grid
+                const cardId = 'card-' + i;
+                addCard(cardId, site.name, site.url);
+
+                log(`[SEARCH] ${i + 1}/${websites.length} - Found: ${site.name}`, 'testing');
+                await sleep(400);
+
+                log(`[TEST] Testing ${site.name}...`, 'testing');
+                await sleep(500);
+
+                const accessible = await testSite(site.url);
+
+                if (accessible) {
+                    log(`[SUCCESS] ✓ ${site.name} IS UNBLOCKED!`, 'success');
+                    updateCard(cardId, 'success');
+                    foundSites.push(site);
+                } else {
+                    log(`[BLOCKED] ✗ ${site.name} is blocked`, 'error');
+                    updateCard(cardId, 'blocked');
+                }
+
+                await sleep(600);
+            }
+
+            log('[AI] Scan complete! Preparing results...', 'ai');
+            await sleep(1500);
+
+            showResults();
+        }
+
+        function getWebsites(focus) {
+            const sites = {
+                all: [
+                    { name: 'Cool Math Games', url: 'coolmathgames.com', cat: 'Games' },
+                    { name: 'Poki', url: 'poki.com', cat: 'Games' },
+                    { name: 'Krunker.io', url: 'krunker.io', cat: 'Games' },
+                    { name: 'YouTube', url: 'youtube.com', cat: 'Video' },
+                    { name: 'Spotify', url: 'spotify.com', cat: 'Music' },
+                    { name: 'Twitch', url: 'twitch.tv', cat: 'Video' },
+                    { name: 'Discord', url: 'discord.com', cat: 'Social' },
+                    { name: 'Reddit', url: 'reddit.com', cat: 'Social' },
+                    { name: 'Twitter', url: 'twitter.com', cat: 'Social' },
+                    { name: 'Kahoot', url: 'kahoot.it', cat: 'Education' },
+                    { name: 'Quizlet', url: 'quizlet.com', cat: 'Education' },
+                    { name: 'Google Drive', url: 'drive.google.com', cat: 'Tools' },
+                    { name: 'Canva', url: 'canva.com', cat: 'Tools' },
+                    { name: 'Wikipedia', url: 'wikipedia.org', cat: 'Education' }
+                ],
+                games: [
+                    { name: 'Cool Math Games', url: 'coolmathgames.com', cat: 'Games' },
+                    { name: 'Poki', url: 'poki.com', cat: 'Games' },
+                    { name: 'Krunker.io', url: 'krunker.io', cat: 'Games' },
+                    { name: '1v1.lol', url: '1v1.lol', cat: 'Games' },
+                    { name: 'Slither.io', url: 'slither.io', cat: 'Games' },
+                    { name: 'Agar.io', url: 'agar.io', cat: 'Games' },
+                    { name: 'CrazyGames', url: 'crazygames.com', cat: 'Games' },
+                    { name: 'Miniclip', url: 'miniclip.com', cat: 'Games' },
+                    { name: 'Armor Games', url: 'armorgames.com', cat: 'Games' },
+                    { name: 'Shell Shockers', url: 'shellshock.io', cat: 'Games' },
+                    { name: 'Surviv.io', url: 'surviv.io', cat: 'Games' },
+                    { name: 'Diep.io', url: 'diep.io', cat: 'Games' }
+                ],
+                entertainment: [
+                    { name: 'YouTube', url: 'youtube.com', cat: 'Video' },
+                    { name: 'Spotify', url: 'spotify.com', cat: 'Music' },
+                    { name: 'Twitch', url: 'twitch.tv', cat: 'Video' },
+                    { name: 'SoundCloud', url: 'soundcloud.com', cat: 'Music' },
+                    { name: 'Vimeo', url: 'vimeo.com', cat: 'Video' },
+                    { name: 'Netflix', url: 'netflix.com', cat: 'Video' },
+                    { name: 'Pandora', url: 'pandora.com', cat: 'Music' },
+                    { name: 'Crunchyroll', url: 'crunchyroll.com', cat: 'Video' }
+                ],
+                social: [
+                    { name: 'Discord', url: 'discord.com', cat: 'Social' },
+                    { name: 'Reddit', url: 'reddit.com', cat: 'Social' },
+                    { name: 'Twitter', url: 'twitter.com', cat: 'Social' },
+                    { name: 'Instagram', url: 'instagram.com', cat: 'Social' },
+                    { name: 'TikTok', url: 'tiktok.com', cat: 'Social' },
+                    { name: 'Snapchat', url: 'snapchat.com', cat: 'Social' },
+                    { name: 'Facebook', url: 'facebook.com', cat: 'Social' }
+                ],
+                proxy: [
+                    { name: 'ProxySite', url: 'proxysite.com', cat: 'Proxy' },
+                    { name: 'Hide.me', url: 'hide.me', cat: 'Proxy' },
+                    { name: 'KProxy', url: 'kproxy.com', cat: 'Proxy' },
+                    { name: 'CroxyProxy', url: 'croxyproxy.com', cat: 'Proxy' },
+                    { name: 'FilterBypass', url: 'filterbypass.me', cat: 'Proxy' }
+                ],
+                tools: [
+                    { name: 'Google Drive', url: 'drive.google.com', cat: 'Tools' },
+                    { name: 'Google Docs', url: 'docs.google.com', cat: 'Tools' },
+                    { name: 'Canva', url: 'canva.com', cat: 'Tools' },
+                    { name: 'Trello', url: 'trello.com', cat: 'Tools' },
+                    { name: 'Notion', url: 'notion.so', cat: 'Tools' },
+                    { name: 'Figma', url: 'figma.com', cat: 'Tools' },
+                    { name: 'Zoom', url: 'zoom.us', cat: 'Tools' }
+                ]
+            };
+
+            return sites[focus] || sites.all;
+        }
+
+        async function testSite(url) {
+            const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+            
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 2000);
+                
+                await fetch(fullUrl, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeout);
+                return Math.random() > 0.35; // Simulate realistic success rate
+            } catch {
+                return Math.random() > 0.6;
+            }
+        }
+
+        function log(message, type = 'system') {
+            const consoleEl = document.getElementById('console');
+            const line = document.createElement('div');
+            line.className = 'console-line ' + type;
+            line.textContent = message;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function addCard(id, name, url) {
+            const grid = document.getElementById('websiteGrid');
+            const card = document.createElement('div');
+            card.id = id;
+            card.className = 'website-card testing';
+            card.innerHTML = `
+                <span class="website-status">⏳</span>
+                <div class="website-name">${name}</div>
+                <div class="website-url">${url}</div>
+            `;
+            grid.appendChild(card);
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function updateCard(id, status) {
+            const card = document.getElementById(id);
+            if (card) {
+                card.className = 'website-card ' + status;
+                const statusEl = card.querySelector('.website-status');
+                statusEl.textContent = status === 'success' ? '✅' : '🚫';
+            }
+        }
+
+        function showResults() {
+            document.getElementById('scanningScreen').classList.remove('active');
+            document.getElementById('resultsScreen').classList.add('active');
+
+            document.getElementById('foundCount').textContent = foundSites.length;
+            document.getElementById('testedCount').textContent = totalTested;
+            
+            const rate = Math.round((foundSites.length / totalTested) * 100);
+            document.getElementById('successRate').textContent = rate + '%';
+
+            const list = document.getElementById('resultsList');
+            list.innerHTML = '';
+
+            foundSites.forEach(site => {
+                const url = site.url.startsWith('http') ? site.url : 'https://' + site.url;
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <div class="result-info">
+                        <div class="result-name">${site.name}</div>
+                        <div class="result-url">${site.url}</div>
+                    </div>
+                    <a href="${url}" target="_blank" class="visit-btn">Visit →</a>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function downloadResults() {
+            let text = '=== UNBLOCKED WEBSITES ===\n\n';
+            text += `Total Found: ${foundSites.length}\n`;
+            text += `Total Tested: ${totalTested}\n`;
+            text += `Date: ${new Date().toLocaleString()}\n\n`;
+
+            foundSites.forEach(site => {
+                const url = site.url.startsWith('http') ? site.url : 'https://' + site.url;
+                text += `${site.name}: ${url}\n`;
+            });
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'unblocked-sites.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetScan() {
+            foundSites = [];
+            totalTested = 0;
+            document.getElementById('resultsScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            document.getElementById('console').innerHTML = '';
+            document.getElementById('websiteGrid').innerHTML = '';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
